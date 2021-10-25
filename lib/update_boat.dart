@@ -9,7 +9,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart';
 import 'package:async/async.dart';
 
-
 class UpdateBoat extends StatefulWidget {
   String idbarco;
   String nomebarco;
@@ -26,10 +25,11 @@ class UpdateBoat extends StatefulWidget {
 
   @override
   State<UpdateBoat> createState() => _UpdateBoatState(
-      idbarco: idbarco,
-      nomebarco: nomebarco,
-      tamanhobarco: tamanhobarco,
-      nomeImagem: nomeImagem);
+        idbarco: idbarco,
+        nomebarco: nomebarco,
+        tamanhobarco: tamanhobarco,
+        nomeImagem: nomeImagem,
+      );
 }
 
 class _UpdateBoatState extends State<UpdateBoat> {
@@ -57,35 +57,47 @@ class _UpdateBoatState extends State<UpdateBoat> {
   late String urlPut = 'http://3.144.90.4:3333/barcos';
   late String urlAttFoto = 'http://3.144.90.4:3333/barcos/foto';
 
-//  Future getBoat(String i) async {
-//    var barco = {
-//      "IDBarco": "",
-//      "nome": "",
-//      "tamanho": "",
-//      "foto": "",
-//    };
-//    print('entrou no getBoat');
-//    print(i);
-//    try {
-//      final response = await http.get(
-//        Uri.parse(url + "?IDBarco=" + i),
-//        headers: <String, String>{
-//          'Content-Type': 'application/json; charset=UTF-8',
-//        },
-//      );
-//      print(response.body[0]);
-  //      final jsonData = jsonDecode(response.body) as List;
-//      print(barco);
-  //   setState(() {
-//        lista = jsonData;
-//        _lista = response as List;
-//      print(_lista);
-  //   });
-//   } catch (error) {
-  //     print('Deu erro no getBoat');
-  //   }
-  //   return;
-  // }
+  Future getBoat(String id) async {
+    var barco = {
+      "IDBarco": "",
+      "nome": "",
+      "tamanho": "",
+      "foto": "",
+    };
+    print('entrou no getBoat');
+    print(id);
+    try {
+      final response = await http.get(
+        Uri.parse(url + "?IDBarco=" + id),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+      );
+      print(response.body[0]);
+      final jsonData = jsonDecode(response.body) as List;
+      print(barco);
+      setState(() {
+        lista = jsonData;
+        _lista = response as List;
+        print(_lista);
+      });
+    } catch (error) {
+      print('Deu erro no getBoat');
+    }
+
+    idbarco = (_lista[0]["IDBarco"]);
+    nomebarco = (_lista[0]["nome"]);
+    nomeImagem = (_lista[0]["foto"]);
+    tamanhobarco = (_lista[0]["tamanho"].toString());
+
+    setState(() {
+      urlImagem = 'http://3.144.90.4:3333/files/' + nomeImagem;
+      imageCache!.clear();
+      imageCache!.clearLiveImages();
+    });
+
+    return;
+  }
 
   void createBoat() async {
     try {
@@ -101,6 +113,8 @@ class _UpdateBoatState extends State<UpdateBoat> {
   }
 
   void updateBoat(String name, String size, String id) async {
+    getBoat(id);
+
     try {
       final response = await http.put(
         Uri.parse(urlPut),
@@ -188,13 +202,13 @@ class _UpdateBoatState extends State<UpdateBoat> {
   }
 
   uploadFile() async {
-
     final imagemBarcoGaleria =
-    await ImagePicker().pickImage(source: ImageSource.gallery);
+        await ImagePicker().pickImage(source: ImageSource.gallery);
     if (imagemBarcoGaleria == null) return;
     final imageTemporary = File(imagemBarcoGaleria.path);
 
-    var stream = new http.ByteStream(DelegatingStream.typed(imageTemporary.openRead()));
+    var stream =
+        new http.ByteStream(DelegatingStream.typed(imageTemporary.openRead()));
     // get file length
     var length = await imageTemporary.length();
 
@@ -220,36 +234,11 @@ class _UpdateBoatState extends State<UpdateBoat> {
     response.stream.transform(utf8.decoder).listen((value) {
       print(value);
     });
-
-    /*print('1');
-
-    var postUri = Uri.parse(urlAttFoto);
-    var request = new http.MultipartRequest("POST", postUri);
-    request.fields['IDBarco'] = idbarco;
-    print(imageTemporary);
-    request.files.add(new http.MultipartFile.fromBytes('file', await imageTemporary));
-
-    print('2');
-
-    request.send().then((response) {
-      if (response.statusCode == 200) print("Uploaded!");
-    });*/
-  }
-
-  void getImagem() async {
-    try {
-      final response = await http.get(Uri.parse(urlImagem));
-      final jsonData = jsonDecode(response.body) as List;
-      setState(() {
-        _lista = jsonData;
-      });
-    } catch (error) {}
   }
 
   @override
   void initState() {
     super.initState();
-    print(nomeImagem);
     //getBoat(idbarco);
     _laco(linhasColunas, linhasColunas, _addPosition);
   }
@@ -268,12 +257,17 @@ class _UpdateBoatState extends State<UpdateBoat> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 if (nomeImagem == '1234')
-                  FlutterLogo()
+                  Image.network(
+                    "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/768px-No_image_available.svg.png",
+                    height: 100,
+                    fit: BoxFit.cover,
+                  )
                 else
                   Image.network(
                     urlImagem,
                     height: 100,
                     fit: BoxFit.cover,
+                    key: UniqueKey(),
                   ),
                 IconButton(
                     onPressed: uploadFile,
