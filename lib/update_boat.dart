@@ -250,13 +250,13 @@ class _UpdateBoatState extends State<UpdateBoat> {
                     if (nomeImagem == '1234')
                       Image.network(
                         "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/768px-No_image_available.svg.png",
-                        height: constraints.maxHeight * .3,
+                        height: constraints.maxHeight * .2,
                         fit: BoxFit.cover,
                       )
                     else
                       Image.network(
                         urlImagem,
-                        height: constraints.maxHeight * .3,
+                        height: constraints.maxHeight * .2,
                         fit: BoxFit.cover,
                         key: UniqueKey(),
                       ),
