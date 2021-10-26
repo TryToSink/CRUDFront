@@ -75,23 +75,17 @@ class _CreateBoatState extends State<CreateBoat> {
   final linhasColunas = 5;
   List _campo = [];
   bool _valid = true;
-  int _count = 12;
+  late int _count = 0;
 
   Widget buildField(BuildContext context, int index) {
     double tamanho = 2;
     return GestureDetector(
-        onTap: _valid
-            ? () {
-                setState(() {
-                  if (_count > 0) {
-                    _count--;
-                    _campo[index]["status"] = true;
-                    print(_campo);
-                  } else
-                    _valid = false;
-                });
-              }
-            : null,
+        onTap: (){
+          setState(() {
+            _count++;
+            _campo[index]["status"] = true;
+          });
+        },
         onDoubleTap: () {
           setState(() {
             if (_count == 0) {
@@ -99,12 +93,10 @@ class _CreateBoatState extends State<CreateBoat> {
             }
 
             _campo[index]["status"] = false;
-            _count++;
+            _count--;
           });
         },
         child: Container(
-          width: 10,
-          height: 10,
           color: _campo[index]["status"] ? Colors.blueAccent : Colors.black26,
           child: null,
         ));
@@ -130,7 +122,6 @@ class _CreateBoatState extends State<CreateBoat> {
     }
   }
 
-
   @override
   void initState() {
     super.initState();
@@ -142,46 +133,77 @@ class _CreateBoatState extends State<CreateBoat> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: buildAppBar(context),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: <Widget>[
-            TextFormField(
-              controller: _nameController,
-              decoration: const InputDecoration(
-                hintText: 'Nome',
-              ),
-            ),
-            TextFormField(
-              controller: _sizeController,
-              decoration: const InputDecoration(
-                hintText: 'Tamanho',
-              ),
-            ),
-            ElevatedButton(
-              child: const Text('Criar'),
-              onPressed: () {
-                setState(() {
-                  _count = int.parse(_sizeController.text);
-                  createBoat(_nameController.text, _sizeController.text);
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => Homepage()));
-                });
-              },
-            ),
-            Expanded(
-              child: GridView.builder(
-                  padding: const EdgeInsets.all(10),
-                  itemCount: _campo.length,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      mainAxisExtent: 50,
-                      mainAxisSpacing: 2,
-                      crossAxisSpacing: 2,
-                      crossAxisCount: linhasColunas),
-                  itemBuilder: buildField),
-            ),
-          ],
+        child: LayoutBuilder(
+          builder: (_, constraints) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                Container(
+                    height: constraints.maxHeight * .5,
+                    width: constraints.maxWidth ,
+                    child: LayoutBuilder(
+                      builder: (_, constraints3) {
+                        return Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            TextFormField(
+                              controller: _nameController,
+                              decoration: const InputDecoration(
+                                hintText: 'Nome',
+                              ),
+                            ),
+                            Padding(
+                              padding: EdgeInsets.only(top: 5),
+                              child: Container(
+                                height: constraints3.maxHeight * .2,
+                                child: Text(
+                                  "Selecione na Grid o tamanho do Barco: $_count",
+                                  textAlign: TextAlign.start,
+                                ),
+                              ),
+                            ),
+                            Container(
+                              width: 100,
+                              height: constraints3.maxHeight * .15,
+                              child: ElevatedButton(
+                                child: const Text('Salvar'),
+                                onPressed: () {
+                                  setState(() {
+                                    createBoat(_nameController.text, _count.toString());
+                                    Navigator.pop(context);
+                                    //_count = int.parse(_sizeController.text);
+                                  });
+                                },
+                              ),
+                            )
+                          ],
+                        );
+                      },
+                    )),
+                Container(
+                  height: constraints.maxHeight * .4,
+                  width: constraints.maxWidth * .8,
+                  child: LayoutBuilder(
+                    builder: (_, constraints2) {
+                      return GridView.builder(
+                          itemCount: _campo.length,
+                          gridDelegate:
+                          SliverGridDelegateWithFixedCrossAxisCount(
+                              mainAxisExtent: constraints2.maxHeight * .15,
+                              mainAxisSpacing: constraints2.maxHeight * .01,
+                              crossAxisSpacing: constraints2.maxWidth * .01,
+                              crossAxisCount: linhasColunas),
+                          itemBuilder: buildField);
+                    },
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );

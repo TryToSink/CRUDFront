@@ -59,6 +59,10 @@ class _Homepagestate extends State<Homepage> {
     getTest();
   }
 
+  Future<void> _reloadList () async {
+    getTest();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -66,7 +70,9 @@ class _Homepagestate extends State<Homepage> {
         title: Center(child: Text("MODERADOR")),
         automaticallyImplyLeading: false,
       ),
-      body: ListView.builder(
+      body: RefreshIndicator(
+        onRefresh: _reloadList,
+        child: ListView.builder(
         itemCount: _lista.length,
         itemBuilder: (BuildContext ctxt, int index) {
           return GestureDetector(
@@ -102,13 +108,13 @@ class _Homepagestate extends State<Homepage> {
                                 context,
                                 MaterialPageRoute(
                                     builder: (context) => UpdateBoat(
-                                          idbarco: (_lista[index]["IDBarco"]),
-                                          nomebarco: (_lista[index]["nome"]),
-                                          nomeImagem: (_lista[index]["foto"]),
-                                          tamanhobarco: (_lista[index]
-                                                  ["tamanho"]
-                                              .toString()),
-                                        )));
+                                      idbarco: (_lista[index]["IDBarco"]),
+                                      nomebarco: (_lista[index]["nome"]),
+                                      nomeImagem: (_lista[index]["foto"]),
+                                      tamanhobarco: (_lista[index]
+                                      ["tamanho"]
+                                          .toString()),
+                                    )));
                           },
                         ),
                       ],
@@ -128,7 +134,7 @@ class _Homepagestate extends State<Homepage> {
                 direction: DismissDirection.startToEnd),
           );
         },
-      ),
+      ),),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.push(
