@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:crud1310/appbar_widget.dart';
 import 'package:crud1310/home.page.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
@@ -99,19 +100,6 @@ class _UpdateBoatState extends State<UpdateBoat> {
     return;
   }
 
-  void createBoat() async {
-    try {
-      final response = await http.post(Uri.parse(urlPut), body: {
-        'IDBarco': _lista[0]['IDBarco'],
-        'nome': _nameController.text,
-        'tamanho': _count,
-      });
-      print(response.body);
-    } catch (error) {
-      print('Deu erro no postBoat');
-    }
-  }
-
   void updateBoat(String name, String size, String id) async {
     getBoat(id);
 
@@ -137,27 +125,21 @@ class _UpdateBoatState extends State<UpdateBoat> {
   final linhasColunas = 5;
   List _campo = [];
   bool _valid = true;
-  int _count = 12;
+  late int _count = int.parse(tamanhobarco);
 
   Widget buildField(BuildContext context, int index) {
     double tamanho = 5;
     return GestureDetector(
-        onTap: _valid
-            ? () {
-                setState(() {
-                  if (_count > 0) {
-                    _count--;
-                    _campo[index]["status"] = true;
-                    print(_campo);
-                  } else
-                    _valid = false;
-                });
-              }
-            : null,
+        onTap: () {
+          setState(() {
+            _count++;
+            _campo[index]["status"] = true;
+          });
+        },
         onDoubleTap: () {
           setState(() {
             _campo[index]["status"] = false;
-            _count++;
+            _count--;
           });
         },
         child: Container(
@@ -168,22 +150,27 @@ class _UpdateBoatState extends State<UpdateBoat> {
         ));
   }
 
-  void _addPosition(int x, int y) {
+  void _addPosition(int x, int y, int _cc) {
     setState(() {
       Map<String, dynamic> newPos = {};
       newPos["linha"] = x;
       newPos["coluna"] = y;
-      newPos["status"] = false;
+      if (_cc>0){
+        newPos["status"] = true;
+      } else newPos["status"] = false;
       newPos["ataque"] = false;
+
 
       _campo.add(newPos);
     });
   }
 
   void _laco(int x, int y, var func) {
+    int _cc = _count;
     for (int i = 0; i < x; i++) {
       for (int j = 0; j < y; j++) {
-        func(i, j);
+        func(i, j, _cc);
+        _cc--;
       }
     }
   }
@@ -236,6 +223,7 @@ class _UpdateBoatState extends State<UpdateBoat> {
     });
   }
 
+
   @override
   void initState() {
     super.initState();
@@ -248,68 +236,98 @@ class _UpdateBoatState extends State<UpdateBoat> {
     _nameController = TextEditingController(text: nomebarco);
     _sizeController = TextEditingController(text: tamanhobarco);
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: buildAppBar(context),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: <Widget>[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (nomeImagem == '1234')
-                  Image.network(
-                    "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/768px-No_image_available.svg.png",
-                    height: 100,
-                    fit: BoxFit.cover,
-                  )
-                else
-                  Image.network(
-                    urlImagem,
-                    height: 100,
-                    fit: BoxFit.cover,
-                    key: UniqueKey(),
+        child: LayoutBuilder(
+          builder: (_, constraints) {
+            return Column(
+              children: <Widget>[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (nomeImagem == '1234')
+                      Image.network(
+                        "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/768px-No_image_available.svg.png",
+                        height: constraints.maxHeight * .3,
+                        fit: BoxFit.cover,
+                      )
+                    else
+                      Image.network(
+                        urlImagem,
+                        height: constraints.maxHeight * .3,
+                        fit: BoxFit.cover,
+                        key: UniqueKey(),
+                      ),
+                    IconButton(
+                        onPressed: uploadFile,
+                        icon: Icon(Icons.upload_file, color: Colors.red))
+                  ],
+                ),
+                Container(
+                    height: constraints.maxHeight * .3,
+                    width: constraints.maxWidth * .8,
+                    child: LayoutBuilder(
+                      builder: (_, constraints3) {
+                        return Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            TextFormField(
+                              controller: _nameController,
+                              decoration: const InputDecoration(
+                                hintText: 'Nome',
+                              ),
+                            ),
+                            Padding(
+                              padding: EdgeInsets.only(top: 5),
+                              child: Container(
+                                height: constraints3.maxHeight * .3,
+                                child: Text(
+                                  "Selecione na Grid o tamanho do Barco: $_count",
+                                  textAlign: TextAlign.start,
+                                ),
+                              ),
+                            ),
+                            Container(
+                              width: 100,
+                              height: constraints3.maxHeight * .15,
+                              child: ElevatedButton(
+                                child: const Text('Salvar'),
+                                onPressed: () {
+                                  setState(() {
+                                    updateBoat(_nameController.text,
+                                        _count.toString(), idbarco);
+                                    Navigator.pop(context);
+                                    //_count = int.parse(_sizeController.text);
+                                  });
+                                },
+                              ),
+                            )
+                          ],
+                        );
+                      },
+                    )),
+                Container(
+                  height: constraints.maxHeight * .3,
+                  width: constraints.maxWidth * .8,
+                  child: LayoutBuilder(
+                    builder: (_, constraints2) {
+                      return GridView.builder(
+                          itemCount: _campo.length,
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                                  mainAxisExtent: constraints2.maxHeight * .2,
+                                  mainAxisSpacing: constraints2.maxHeight * .01,
+                                  crossAxisSpacing: constraints2.maxWidth * .01,
+                                  crossAxisCount: linhasColunas),
+                          itemBuilder: buildField);
+                    },
                   ),
-                IconButton(
-                    onPressed: uploadFile,
-                    icon: Icon(Icons.upload_file, color: Colors.red))
+                ),
               ],
-            ),
-            TextFormField(
-              controller: _nameController,
-              decoration: const InputDecoration(
-                hintText: 'Nome',
-              ),
-            ),
-            TextFormField(
-              controller: _sizeController,
-              decoration: const InputDecoration(
-                hintText: 'Tamanho',
-              ),
-            ),
-            ElevatedButton(
-              child: const Text('Salvar'),
-              onPressed: () {
-                setState(() {
-                  updateBoat(
-                      _nameController.text, _sizeController.text, idbarco);
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => Homepage()));
-                  //_count = int.parse(_sizeController.text);
-                });
-              },
-            ),
-            Expanded(
-              child: GridView.builder(
-                  padding: const EdgeInsets.all(10),
-                  itemCount: _campo.length,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      mainAxisExtent: 50,
-                      mainAxisSpacing: 2,
-                      crossAxisSpacing: 2,
-                      crossAxisCount: linhasColunas),
-                  itemBuilder: buildField),
-            ),
-          ],
+            );
+          },
         ),
       ),
     );
